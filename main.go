@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 	//Подключение к бд
-	err = database.ConnectDB()
+	db, err := database.ConnectDB()
 	if err != nil {
 		log.Fatalf("Error connect to database: %s", err)
 	}
@@ -33,18 +33,18 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
 	http.HandleFunc("/api/nextdate", handlers.NextDateHandler)
-	http.HandleFunc("/api/tasks", handlers.GetTasksHandler(database.DB.Db))
-	http.HandleFunc("/api/task/done", handlers.DoneTaskHandler(database.DB.Db))
+	http.HandleFunc("/api/tasks", handlers.GetTasksHandler(db))
+	http.HandleFunc("/api/task/done", handlers.DoneTaskHandler(db))
 	http.HandleFunc("/api/task", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			handlers.AddTaskHandler(database.DB.Db)(w, r)
+			handlers.AddTaskHandler(db)(w, r)
 		case http.MethodGet:
-			handlers.GetTaskHandler(database.DB.Db)(w, r)
+			handlers.GetTaskHandler(db)(w, r)
 		case http.MethodPut:
-			handlers.EditTaskHandler(database.DB.Db)(w, r)
+			handlers.EditTaskHandler(db)(w, r)
 		case http.MethodDelete:
-			handlers.DeleteTaskHandler(database.DB.Db)(w, r)
+			handlers.DeleteTaskHandler(db)(w, r)
 
 		default:
 			http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)

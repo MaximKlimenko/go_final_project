@@ -26,40 +26,35 @@ type Database struct {
 	Db *sqlx.DB
 }
 
-var DB Database
-
-func ConnectDB() error {
+func ConnectDB() (*sqlx.DB, error) {
 
 	dbFile := os.Getenv("TODO_DBFILE")
 	var install bool
 	_, err := os.Stat(dbFile)
+
+	db, err := sqlx.Connect("sqlite", dbFile)
 	if err != nil {
 		install = true
 	}
 	if install {
 		_, err = os.Create(dbFile)
 		if err != nil {
-			return err
+			return db, err
 		}
 	}
 
-	db, err := sqlx.Connect("sqlite", dbFile)
 	if err != nil {
-		return err
+		return db, err
 	}
 
 	if install {
 		err = createTable(db)
 		if err != nil {
-			return err
+			return db, err
 		}
 	}
 
-	DB = Database{
-		Db: db,
-	}
-
-	return nil
+	return db, nil
 }
 
 func createTable(db *sqlx.DB) error {
