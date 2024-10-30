@@ -24,8 +24,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	} else {
-		fmt.Fprintln(w, nextDate, err)
 	}
 
+	fmt.Fprintln(w, nextDate)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/MaximKlimenko/go_final_project/utils"
@@ -12,22 +13,37 @@ func GetTasksHandler(db *sqlx.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var tasks []utils.Task
 		var err error
+
 		query := "SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT 50"
-		rows, err := db.Query(query)
-		for rows.Next() {
-			var task utils.Task
-			if err := rows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat); err != nil {
-				http.Error(w, `{"error":"Ошибка при чтении результатов"}`, http.StatusInternalServerError)
-				return
-			}
-			tasks = append(tasks, task)
-		}
-		if err = rows.Err(); err != nil {
-			http.Error(w, `{"error":"Ошибка при обработке результатов"}`, http.StatusInternalServerError)
+		err = db.Select(&tasks, query)
+		if err != nil {
+			http.Error(w, `{"error": "Ошибка при выборке задач"}`, http.StatusInternalServerError)
 			return
 		}
 
+		// Если задач нет, возвращаем пустой слайс
+		if tasks == nil {
+			tasks = []utils.Task{}
+		}
+
+		// Формируем ответ
+		response := utils.TasksResponse{
+			Tasks: make([]utils.TaskJSON, len(tasks)),
+		}
+
+		for i, task := range tasks {
+			response.Tasks[i] = utils.TaskJSON{
+				ID:      fmt.Sprint(task.ID),
+				Date:    task.Date,
+				Title:   task.Title,
+				Comment: task.Comment,
+				Repeat:  task.Repeat,
+			}
+		}
+
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode(map[string]interface{}{"tasks": tasks})
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, `{"error": "Ошибка при формировании ответа"}`, http.StatusInternalServerError)
+		}
 	}
 }
