@@ -30,7 +30,6 @@ func ConnectDB() (*sqlx.DB, error) {
 
 	dbFile := os.Getenv("TODO_DBFILE")
 	var install bool
-	_, err := os.Stat(dbFile)
 
 	db, err := sqlx.Connect("sqlite", dbFile)
 	if err != nil {
